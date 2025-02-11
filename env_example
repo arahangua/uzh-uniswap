@@ -1,0 +1,25 @@
+# Environment variables for Hardhat configuration and frontend
+
+# Deployer private key - IMPORTANT: keep this private and secure!
+# Never commit your private key to a public repository.
+DEPLOYER_PRIVATE_KEY="your_private_key_here"
+
+# RPC URL for your custom Ethereum network
+YOUR_NETWORK_RPC_URL="your_network_rpc_url_here"
+
+# --- Frontend environment variables (for .env.local in frontend directory) ---
+
+# RPC URL for your custom Ethereum network (same as above, but prefixed for React)
+REACT_APP_NETWORK_RPC_URL="your_network_rpc_url_here"
+
+# Address of your deployed ERC20 token contract
+REACT_APP_ERC20_TOKEN_ADDRESS="YOUR_ERC20_TOKEN_ADDRESS"
+
+# Address of your deployed Uniswap Factory contract
+REACT_APP_FACTORY_ADDRESS="YOUR_UNISWAP_FACTORY_ADDRESS"
+
+# Address of your deployed Uniswap Router contract
+REACT_APP_ROUTER_ADDRESS="YOUR_UNISWAP_ROUTER_ADDRESS"
+
+# Address of your deployed WETH contract
+REACT_APP_WETH_ADDRESS="YOUR_WETH_ADDRESS"
