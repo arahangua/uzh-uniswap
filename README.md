@@ -10,7 +10,7 @@ This project provides a minimal one-stop solution for deploying Uniswap contract
 - Node.js and npm installed
 - Basic understanding of Ethereum development and smart contracts
 - Familiarity with Hardhat development environment (or similar tools)
-- Git
+- [degit](https://github.com/Rich-Harris/degit) installed globally (`npm install -g degit`)
 
 **Setup:**
 
@@ -66,17 +66,17 @@ This project provides a minimal one-stop solution for deploying Uniswap contract
 
    - **Choose Uniswap Version:** Decide whether you want to use Uniswap V2 or V3. This guide will assume you are using V2 for simplicity, but instructions for V3 are similar.
    - **Fetch Uniswap Contracts:**
-     - **Uniswap V2:** Clone the Uniswap V2 repositories from Github:
+     - **Uniswap V2:** Use `degit` to download Uniswap V2 repositories from Github:
        ```bash
-       git clone https://github.com/Uniswap/v2-core.git uniswap-v2-core
-       git clone https://github.com/Uniswap/v2-periphery.git uniswap-v2-periphery
+       degit Uniswap/v2-core uniswap-v2-core
+       degit Uniswap/v2-periphery uniswap-v2-periphery
        ```
-     - **Uniswap V3:** Clone the Uniswap V3 repositories from Github:
+     - **Uniswap V3:** Use `degit` to download Uniswap V3 repositories from Github:
        ```bash
-       git clone https://github.com/Uniswap/v3-core.git uniswap-v3-core
-       git clone https://github.com/Uniswap/v3-periphery.git uniswap-v3-periphery
+       degit Uniswap/v3-core uniswap-v3-core
+       degit Uniswap/v3-periphery uniswap-v3-periphery
        ```
-   - **Install Dependencies and Compile:** Navigate into each cloned repository (e.g., `uniswap-v2-core`) and install dependencies and compile the contracts. Refer to the Uniswap repository's README for specific instructions. For V2, it's usually:
+   - **Install Dependencies and Compile:** Navigate into each downloaded directory (e.g., `uniswap-v2-core`) and install dependencies and compile the contracts. Refer to the Uniswap repository's README for specific instructions. For V2, it's usually:
      ```bash
      cd uniswap-v2-core
      npm install
