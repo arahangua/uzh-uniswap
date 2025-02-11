@@ -7,10 +7,10 @@ This project provides a minimal one-stop solution for deploying Uniswap contract
 
 **Prerequisites:**
 
-- Node.js and npm installed
+- Node.js and npm or yarn installed
 - Basic understanding of Ethereum development and smart contracts
 - Familiarity with Hardhat development environment (or similar tools)
-- [degit](https://github.com/Rich-Harris/degit) installed globally (`npm install -g degit`)
+- [degit](https://github.com/Rich-Harris/degit) installed globally (`npm install -g degit` or `yarn global add degit`)
 
 **Setup:**
 
@@ -22,11 +22,23 @@ This project provides a minimal one-stop solution for deploying Uniswap contract
     npm install --save-dev hardhat @nomicfoundation/hardhat-toolbox
     npx hardhat
     ```
+    or using yarn:
+    ```bash
+    mkdir uzh-uniswap-project
+    cd uzh-uniswap-project
+    yarn init -y
+    yarn add --dev hardhat @nomicfoundation/hardhat-toolbox
+    yarn create hardhat
+    ```
     Choose "Create an empty hardhat.config.js" when prompted.
 
 2.  Install necessary dependencies:
     ```bash
     npm install --save ethers dotenv @openzeppelin/contracts
+    ```
+    or using yarn:
+    ```bash
+    yarn add ethers dotenv @openzeppelin/contracts
     ```
 
 **Configuration:**
@@ -66,28 +78,29 @@ This project provides a minimal one-stop solution for deploying Uniswap contract
 
    - **Choose Uniswap Version:** Decide whether you want to use Uniswap V2 or V3. This guide will assume you are using V2 for simplicity, but instructions for V3 are similar.
    - **Fetch Uniswap Contracts:**
-     - **Uniswap V2:** Use `degit` to download Uniswap V2 repositories from Github:
+     - **Uniswap V2:** Use `degit` to download Uniswap V2 repositories from Github. For stability, consider using a specific commit hash or tag.
        ```bash
-       degit Uniswap/v2-core uniswap-v2-core
-       degit Uniswap/v2-periphery uniswap-v2-periphery
+       degit Uniswap/v2-core#<COMMIT_HASH_OR_TAG> uniswap-v2-core  # e.g., degit Uniswap/v2-core#v1.0.1 uniswap-v2-core
+       degit Uniswap/v2-periphery#<COMMIT_HASH_OR_TAG> uniswap-v2-periphery # e.g., degit Uniswap/v2-periphery#v1.1.1 uniswap-v2-periphery
        ```
-     - **Uniswap V3:** Use `degit` to download Uniswap V3 repositories from Github:
+     - **Uniswap V3:** Use `degit` to download Uniswap V3 repositories from Github. For stability, consider using a specific commit hash or tag.
        ```bash
-       degit Uniswap/v3-core uniswap-v3-core
-       degit Uniswap/v3-periphery uniswap-v3-periphery
+       degit Uniswap/v3-core#<COMMIT_HASH_OR_TAG> uniswap-v3-core # e.g., degit Uniswap/v3-core#v1.0.0 uniswap-v3-core
+       degit Uniswap/v3-periphery#<COMMIT_HASH_OR_TAG> uniswap-v3-periphery # e.g., degit Uniswap/v3-periphery#v1.4.35 uniswap-v3-periphery
        ```
+       **Replace `<COMMIT_HASH_OR_TAG>` with a specific commit hash or tag from the Uniswap repositories for more stable versions.** You can find these on the Uniswap GitHub repository releases or commit history.
    - **Install Dependencies and Compile:** Navigate into each downloaded directory (e.g., `uniswap-v2-core`) and install dependencies and compile the contracts. Refer to the Uniswap repository's README for specific instructions. For V2, it's usually:
      ```bash
      cd uniswap-v2-core
-     npm install
-     npm run build
+     npm install # or yarn install
+     npm run build # or yarn build
      cd ../uniswap-v2-periphery
-     npm install
-     npm run build
+     npm install # or yarn install
+     npm run build # or yarn build
      ```
      For V3, the commands might be slightly different, so always check the official documentation.
    - **Deploy Contracts:**
-     - **Factory and Router:** You need to deploy at least the Factory and Router contracts from the chosen Uniswap version to your custom Ethereum chain. **You will need to find deployment scripts or instructions within the Uniswap repositories or their documentation and adapt them to your Hardhat setup.** Example deployment scripts for ERC20 tokens are provided later in this guide, which you can use as a template.
+     - **Factory and Router:** You need to deploy at least the Factory and Router contracts from the chosen Uniswap version to your custom Ethereum chain. **Refer to the Uniswap repositories' documentation and deployment scripts for Factory and Router contracts. You might need to adapt these scripts to work within your Hardhat environment.** Example deployment scripts for ERC20 tokens are provided later in this guide, which you can use as a template for adapting Uniswap deployment scripts.
      - **WETH (Wrapped ETH):**  For Uniswap V2, you will also need to deploy a WETH contract if you don't have one already on your network. Uniswap V2 periphery repository usually includes a WETH deployment script. For V3, WETH is also typically required.
    - **Note Contract Addresses:** After deploying the Factory, Router, and WETH (if applicable) contracts, note down their contract addresses. You will need these addresses in later steps and in your scripts.
 
@@ -96,11 +109,11 @@ This project provides a minimal one-stop solution for deploying Uniswap contract
    - Write a smart contract for your ERC20 token (e.g., `contracts/MyToken.sol`). You can use standard ERC20 implementations like those from OpenZeppelin.  Create a file `contracts/MyToken.sol` and write your ERC20 contract code in it.  For example, you can create a simple ERC20 token inheriting from OpenZeppelin's ERC20 contract and minting initial tokens to the deployer.
    - Compile your contracts:
      ```bash
-     npx hardhat compile
+     npx hardhat compile # or yarn hardhat compile
      ```
    - Deploy your ERC20 contract to your custom Ethereum chain using a deployment script (e.g., `scripts/deploy_erc20.js`). Create a file `scripts/deploy_erc20.js` and write a deployment script using `ethers.js` to deploy your `MyToken` contract.  This script will use your deployer private key from the `.env` file and your network configuration from `hardhat.config.js`.
      ```bash
-     npx hardhat run scripts/deploy_erc20.js --network yourNetworkName
+     npx hardhat run scripts/deploy_erc20.js --network yourNetworkName # or yarn hardhat run scripts/deploy_erc20.js --network yourNetworkName
      ```
    - Note down the contract address of your deployed ERC20 token from the deployment output.
 
@@ -109,7 +122,7 @@ This project provides a minimal one-stop solution for deploying Uniswap contract
    - Ensure you have deployed Uniswap V2 or V3 factory and router contracts and have their addresses.
    - Use a script (e.g., `scripts/create_pair.js`) to interact with the Uniswap Factory contract to create a new pair (liquidity pool) for your ERC20 token and WETH (Wrapped Ether) or another suitable token.  This script will use the Factory contract address, WETH address, and your ERC20 token address.  Remember to replace placeholders with your actual contract addresses in the script.
      ```bash
-     npx hardhat run scripts/create_pair.js --network yourNetworkName
+     npx hardhat run scripts/create_pair.js --network yourNetworkName # or yarn hardhat run scripts/create_pair.js --network yourNetworkName
      ```
    - Note down the contract address of the newly created pair (liquidity pool) from the script output.
 
@@ -117,14 +130,14 @@ This project provides a minimal one-stop solution for deploying Uniswap contract
 
    - Use a script (e.g., `scripts/add_liquidity.js`) to interact with the Uniswap Router contract to provide liquidity to the pair. This script will use the Router contract address, WETH address, pair contract address, and amounts of tokens to provide. You will need to approve the Router contract to spend your ERC20 tokens and WETH before adding liquidity.
      ```bash
-     npx hardhat run scripts/add_liquidity.js --network yourNetworkName
+     npx hardhat run scripts/add_liquidity.js --network yourNetworkName # or yarn hardhat run scripts/add_liquidity.js --network yourNetworkName
      ```
 
 **4. Do Exchange (Swap):**
 
    - Use a script (e.g., `scripts/swap.js`) to interact with the Uniswap Router contract to perform a swap. This script will use the Router contract address, WETH address, token addresses, amount to swap, and recipient address.
      ```bash
-     npx hardhat run scripts/swap.js --network yourNetworkName
+     npx hardhat run scripts/swap.js --network yourNetworkName # or yarn hardhat run scripts/swap.js --network yourNetworkName
      ```
 
 **5. Reap Fee (Collect Fees):**
@@ -132,7 +145,7 @@ This project provides a minimal one-stop solution for deploying Uniswap contract
    - In Uniswap V2, fees are distributed to liquidity providers proportionally to their liquidity. Fees are automatically accumulated in the pair contract. To collect fees, liquidity providers need to remove liquidity.
    - Use a script (e.g., `scripts/remove_liquidity.js`) to remove liquidity from the pool. When removing liquidity, accumulated fees are automatically distributed to your address based on your provided liquidity share.
      ```bash
-     npx hardhat run scripts/remove_liquidity.js --network yourNetworkName
+     npx hardhat run scripts/remove_liquidity.js --network yourNetworkName # or yarn hardhat run scripts/remove_liquidity.js --network yourNetworkName
      ```
    - In Uniswap V3, fee collection is more granular and might require different functions. Refer to Uniswap V3 documentation for details and consider using the Uniswap V3 SDK for easier interaction.
 
@@ -146,11 +159,16 @@ This section provides instructions for setting up a minimal React frontend to in
     npx create-react-app frontend
     cd frontend
     ```
+    or using yarn:
+    ```bash
+    yarn create react-app frontend
+    cd frontend
+    ```
 
 2.  **Install Frontend Dependencies:**
     Install necessary packages for interacting with Ethereum and building the UI:
     ```bash
-    npm install ethers react-scripts
+    npm install ethers react-scripts # or yarn add ethers react-scripts
     ```
     We recommend using `ethers` for interacting with Ethereum contracts in your frontend as it is consistent with the Hardhat development environment.
 
@@ -224,9 +242,10 @@ This section provides instructions for setting up a minimal React frontend to in
     ```
 
 5.  **Run Frontend:**
-    Start your React frontend development server:
+    Start your React frontend development server from the `frontend` directory:
     ```bash
-    npm start
+    cd frontend
+    npm start # or yarn start
     ```
     This will usually open your frontend in a browser at `http://localhost:3000`.
 
@@ -264,6 +283,7 @@ This section provides instructions for setting up a minimal React frontend to in
 - Replace placeholders with your actual values and contract addresses.
 - You will need to install Uniswap V2 or V3 contract ABIs (e.g., `@uniswap/v2-core`, `@uniswap/v2-periphery` or similar for V3) and import them in your scripts and frontend to interact with Uniswap contracts.
 - This guide provides basic examples. You may need to add error handling, more robust input validation, and more advanced features for a production-ready application.
+- **Security Best Practices:** Be extremely careful with handling private keys. Ensure your `.env` file is not committed to version control. In a production environment, never expose contract addresses or private keys directly in frontend code. Use secure methods for managing environment variables and sensitive information.
 - Always review and understand the code and scripts before running them, especially when dealing with blockchain and smart contracts.
 
-This updated `README.md` now includes clarifications on Uniswap contract deployment, improved frontend dependency recommendations, more specific ABI instructions, and stronger emphasis on using the Uniswap V3 SDK for V3 implementations. Remember to expand upon this basic example to build a more complete and user-friendly frontend application. Good luck!
+This updated `README.md` now includes suggestions for using `yarn`, clarifies Uniswap contract deployment and frontend execution steps, recommends using specific commit hashes/tags for fetching Uniswap contracts, and adds a security best practices note. Remember to expand upon this basic example to build a more complete and user-friendly frontend application. Good luck!
