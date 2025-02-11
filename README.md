@@ -100,7 +100,7 @@ This project provides a minimal one-stop solution for deploying Uniswap contract
      ```
      For V3, the commands might be slightly different, so always check the official documentation.
    - **Deploy Contracts:**
-     - **Factory and Router:** You need to deploy at least the Factory and Router contracts from the chosen Uniswap version to your custom Ethereum chain. **Refer to the Uniswap repositories' documentation and deployment scripts for Factory and Router contracts. You might need to adapt these scripts to work within your Hardhat environment.** Example deployment scripts for ERC20 tokens are provided later in this guide, which you can use as a template for adapting Uniswap deployment scripts.
+     - **Factory and Router:** You need to deploy at least the Factory and Router contracts from the chosen Uniswap version to your custom Ethereum chain. **Deployment scripts for Uniswap V2 and V3 Factory and Router contracts are typically found within their respective periphery repositories (e.g., `v2-periphery` or `v3-periphery`) in the `deploy` directory or in the documentation. You will likely need to adapt these scripts to work within your Hardhat environment, configuring network and deployer settings.** Example deployment scripts for ERC20 tokens are provided later in this guide, which you can use as a template for adapting Uniswap deployment scripts.
      - **WETH (Wrapped ETH):**  For Uniswap V2, you will also need to deploy a WETH contract if you don't have one already on your network. Uniswap V2 periphery repository usually includes a WETH deployment script. For V3, WETH is also typically required.
    - **Note Contract Addresses:** After deploying the Factory, Router, and WETH (if applicable) contracts, note down their contract addresses. You will need these addresses in later steps and in your scripts.
 
@@ -199,6 +199,7 @@ This section provides instructions for setting up a minimal React frontend to in
 
     function App() {
         const [account, setAccount] = useState(null);
+        const [tokenBalance, setTokenBalance] = useState(null);
 
         useEffect(() => {
             connectWallet();
@@ -210,6 +211,9 @@ This section provides instructions for setting up a minimal React frontend to in
                     const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
                     setAccount(accounts[0]);
                     console.log("Connected account:", accounts[0]);
+                    if (accounts[0]) {
+                        await fetchTokenBalance(accounts[0]); // Fetch token balance after connecting
+                    }
                 } catch (error) {
                     console.error("Could not connect wallet:", error);
                 }
@@ -218,11 +222,29 @@ This section provides instructions for setting up a minimal React frontend to in
             }
         }
 
+        async function fetchTokenBalance(account) {
+            if (!ERC20_TOKEN_ADDRESS) return; // Return if token address is not set
+            const provider = new ethers.providers.JsonRpcProvider(NETWORK_RPC_URL);
+            const tokenContract = new ethers.Contract(ERC20_TOKEN_ADDRESS, ["function balanceOf(address) view returns (uint256)", "function symbol() view returns (string)"], provider); // Minimal ABI for balance and symbol
+            try {
+                const balance = await tokenContract.balanceOf(account);
+                const symbol = await tokenContract.symbol();
+                setTokenBalance(`${ethers.utils.formatUnits(balance, 18)} ${symbol}`); // Assuming 18 decimals
+            } catch (error) {
+                console.error("Error fetching token balance:", error);
+                setTokenBalance("Error fetching balance");
+            }
+        }
+
+
         return (
             <div className="App">
                 <h1>Uniswap Interaction</h1>
                 {account ? (
-                    <p>Connected Account: {account}</p>
+                    <div>
+                        <p>Connected Account: {account}</p>
+                        {tokenBalance && <p>Token Balance: {tokenBalance}</p>}
+                    </div>
                 ) : (
                     <button onClick={connectWallet}>Connect Wallet</button>
                 )}
@@ -251,6 +273,22 @@ This section provides instructions for setting up a minimal React frontend to in
 
 6.  **Expand Frontend Functionality:**
     - **Contract Interaction:** Use `ethers.js` within your React components to interact with your deployed contracts. You will need to use Contract ABIs (Application Binary Interfaces) for your ERC20 token, Uniswap Factory, Router, and Pair contracts.
+
+        **Example of creating a contract instance in your frontend using `ethers.js`:**
+
+        ```javascript
+        import { ethers } from 'ethers';
+
+        const ERC20_TOKEN_ADDRESS = process.env.REACT_APP_ERC20_TOKEN_ADDRESS;
+        const ERC20_TOKEN_ABI = [...] // Your ERC20 token ABI (from artifacts/contracts/MyToken.sol/MyToken.json)
+        const NETWORK_RPC_URL = process.env.REACT_APP_NETWORK_RPC_URL;
+
+        const provider = new ethers.providers.JsonRpcProvider(NETWORK_RPC_URL);
+        const tokenContract = new ethers.Contract(ERC20_TOKEN_ADDRESS, ERC20_TOKEN_ABI, provider);
+
+        // Now you can use tokenContract to call functions on your deployed ERC20 contract
+        ```
+
         - **ERC20 Token ABI:** You can find the ABI for your `MyToken` contract in the compiled output in your Hardhat project under `artifacts/contracts/MyToken.sol/MyToken.json`. Look for the `abi` field in this JSON file.
         - **Uniswap V2 ABIs:** For Uniswap V2 contracts, after installing `@uniswap/v2-core` and `@uniswap/v2-periphery` in your Hardhat project, you can find the ABIs in the `node_modules` directory, for example, under `@uniswap/v2-core/build/abi` and `@uniswap/v2-periphery/build/abi`.
         - **Uniswap V3 ABIs:** If you are using Uniswap V3, you will similarly find ABIs in the `node_modules` directory after installing Uniswap V3 SDKs and libraries. **Consider using the official Uniswap V3 SDK for easier frontend integration with V3 contracts.**
@@ -286,4 +324,4 @@ This section provides instructions for setting up a minimal React frontend to in
 - **Security Best Practices:** Be extremely careful with handling private keys. Ensure your `.env` file is not committed to version control. In a production environment, never expose contract addresses or private keys directly in frontend code. Use secure methods for managing environment variables and sensitive information.
 - Always review and understand the code and scripts before running them, especially when dealing with blockchain and smart contracts.
 
-This updated `README.md` now includes suggestions for using `yarn`, clarifies Uniswap contract deployment and frontend execution steps, recommends using specific commit hashes/tags for fetching Uniswap contracts, and adds a security best practices note. Remember to expand upon this basic example to build a more complete and user-friendly frontend application. Good luck!
+This updated `README.md` now includes more explicit instructions on where to find Uniswap deployment scripts, a basic code example of contract interaction in the frontend, and maintains a consistent style with yarn alternatives provided alongside npm commands.  Remember to expand upon this basic example to build a more complete and user-friendly frontend application. Good luck!
