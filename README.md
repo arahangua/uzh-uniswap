@@ -100,7 +100,7 @@ This project provides a minimal one-stop solution for deploying Uniswap contract
      ```
      For V3, the commands might be slightly different, so always check the official documentation.
    - **Deploy Contracts:**
-     - **Factory and Router:** You need to deploy at least the Factory and Router contracts from the chosen Uniswap version to your custom Ethereum chain. **Deployment scripts for Uniswap V2 and V3 Factory and Router contracts are typically found within their respective periphery repositories (e.g., `v2-periphery` or `v3-periphery`) in the `deploy` directory or in the documentation. You will likely need to adapt these scripts to work within your Hardhat environment, configuring network and deployer settings.** Example deployment scripts for ERC20 tokens are provided later in this guide, which you can use as a template for adapting Uniswap deployment scripts.
+     - **Factory and Router:** You need to deploy at least the Factory and Router contracts from the chosen Uniswap version to your custom Ethereum chain. **Deployment scripts for Uniswap V2 and V3 Factory and Router contracts are typically found within their respective periphery repositories (e.g., `v2-periphery` or `v3-periphery`) in the `deploy` directory or in the documentation. You will likely need to adapt these scripts to work within your Hardhat environment, configuring network and deployer settings in your Hardhat config file (`hardhat.config.js`) and `.env` file.** Example deployment scripts for ERC20 tokens are provided later in this guide, which you can use as a template for adapting Uniswap deployment scripts.
      - **WETH (Wrapped ETH):**  For Uniswap V2, you will also need to deploy a WETH contract if you don't have one already on your network. Uniswap V2 periphery repository usually includes a WETH deployment script. For V3, WETH is also typically required.
    - **Note Contract Addresses:** After deploying the Factory, Router, and WETH (if applicable) contracts, note down their contract addresses. You will need these addresses in later steps and in your scripts.
 
@@ -200,6 +200,7 @@ This section provides instructions for setting up a minimal React frontend to in
     function App() {
         const [account, setAccount] = useState(null);
         const [tokenBalance, setTokenBalance] = useState(null);
+        const [tokenSymbol, setTokenSymbol] = useState(null); // State for token symbol
 
         useEffect(() => {
             connectWallet();
@@ -225,14 +226,17 @@ This section provides instructions for setting up a minimal React frontend to in
         async function fetchTokenBalance(account) {
             if (!ERC20_TOKEN_ADDRESS) return; // Return if token address is not set
             const provider = new ethers.providers.JsonRpcProvider(NETWORK_RPC_URL);
-            const tokenContract = new ethers.Contract(ERC20_TOKEN_ADDRESS, ["function balanceOf(address) view returns (uint256)", "function symbol() view returns (string)"], provider); // Minimal ABI for balance and symbol
+            const tokenContract = new ethers.Contract(ERC20_TOKEN_ADDRESS, ["function balanceOf(address) view returns (uint256)", "function symbol() view returns (string)", "function decimals() view returns (uint8)"], provider); // Minimal ABI for balance, symbol, and decimals
             try {
                 const balance = await tokenContract.balanceOf(account);
                 const symbol = await tokenContract.symbol();
-                setTokenBalance(`${ethers.utils.formatUnits(balance, 18)} ${symbol}`); // Assuming 18 decimals
+                const decimals = await tokenContract.decimals() || 18; // Default to 18 decimals if not available
+                setTokenBalance(`${ethers.utils.formatUnits(balance, decimals)}`);
+                setTokenSymbol(symbol);
             } catch (error) {
                 console.error("Error fetching token balance:", error);
                 setTokenBalance("Error fetching balance");
+                setTokenSymbol("N/A"); // Set symbol to N/A in case of error
             }
         }
 
@@ -243,7 +247,7 @@ This section provides instructions for setting up a minimal React frontend to in
                 {account ? (
                     <div>
                         <p>Connected Account: {account}</p>
-                        {tokenBalance && <p>Token Balance: {tokenBalance}</p>}
+                        {tokenBalance && <p>Token Balance: {tokenBalance} {tokenSymbol}</p>}
                     </div>
                 ) : (
                     <button onClick={connectWallet}>Connect Wallet</button>
@@ -292,6 +296,9 @@ This section provides instructions for setting up a minimal React frontend to in
         - **ERC20 Token ABI:** You can find the ABI for your `MyToken` contract in the compiled output in your Hardhat project under `artifacts/contracts/MyToken.sol/MyToken.json`. Look for the `abi` field in this JSON file.
         - **Uniswap V2 ABIs:** For Uniswap V2 contracts, after installing `@uniswap/v2-core` and `@uniswap/v2-periphery` in your Hardhat project, you can find the ABIs in the `node_modules` directory, for example, under `@uniswap/v2-core/build/abi` and `@uniswap/v2-periphery/build/abi`.
         - **Uniswap V3 ABIs:** If you are using Uniswap V3, you will similarly find ABIs in the `node_modules` directory after installing Uniswap V3 SDKs and libraries. **Consider using the official Uniswap V3 SDK for easier frontend integration with V3 contracts.**
+
+    - **Testing on Local Network:** **Before deploying to your custom Ethereum chain, it's highly recommended to test your scripts and frontend interactions on a local Hardhat network.** Hardhat Network provides a fast and easy-to-use local Ethereum environment for testing and development. You can start a local Hardhat network using `npx hardhat node` or `yarn hardhat node` and deploy your contracts to it. This allows for faster iteration and debugging before moving to a live network.
+
     - **UI Elements:** Create React components and UI elements (buttons, input fields, etc.) to allow users to perform actions like:
         - Connect/disconnect wallet
         - View token balances
@@ -304,7 +311,7 @@ This section provides instructions for setting up a minimal React frontend to in
 **Further Steps:**
 
 - **Configuration:**  Ensure your frontend is correctly configured with the right contract addresses and network RPC URL in the `.env.local` file. Double-check these values to match your deployed contracts.
-- **Testing:** Thoroughly test your frontend by interacting with your deployed contracts on your custom Ethereum chain. Test all functionalities: connecting wallet, viewing balances, creating pools, providing liquidity, swapping tokens, and any other features you implement.
+- **Testing:** Thoroughly test your frontend by interacting with your deployed contracts, **starting with a local Hardhat network and then on your custom Ethereum chain.** Test all functionalities: connecting wallet, viewing balances, creating pools, providing liquidity, swapping tokens, and any other features you implement.
 
 **Uniswap V2 vs V3:**
 
@@ -321,7 +328,7 @@ This section provides instructions for setting up a minimal React frontend to in
 - Replace placeholders with your actual values and contract addresses.
 - You will need to install Uniswap V2 or V3 contract ABIs (e.g., `@uniswap/v2-core`, `@uniswap/v2-periphery` or similar for V3) and import them in your scripts and frontend to interact with Uniswap contracts.
 - This guide provides basic examples. You may need to add error handling, more robust input validation, and more advanced features for a production-ready application.
-- **Security Best Practices:** Be extremely careful with handling private keys. Ensure your `.env` file is not committed to version control. In a production environment, never expose contract addresses or private keys directly in frontend code. Use secure methods for managing environment variables and sensitive information.
+- **Security Best Practices: Security is paramount in blockchain development. Be extremely careful with handling private keys. Ensure your `.env` file is properly secured and never committed to version control. In a production environment, never expose contract addresses or private keys directly in frontend code. Use secure methods for managing environment variables and sensitive information. Regularly audit your code for security vulnerabilities.**
 - Always review and understand the code and scripts before running them, especially when dealing with blockchain and smart contracts.
 
-This updated `README.md` now includes more explicit instructions on where to find Uniswap deployment scripts, a basic code example of contract interaction in the frontend, and maintains a consistent style with yarn alternatives provided alongside npm commands.  Remember to expand upon this basic example to build a more complete and user-friendly frontend application. Good luck!
+This updated `README.md` includes improved instructions for Uniswap contract deployment, an enhanced frontend code example that fetches token symbol and handles decimals, reorganized ABI instructions, a recommendation to test on a local Hardhat network, and a slightly emphasized security best practices note. Remember to expand upon this basic example to build a more complete and user-friendly frontend application. Good luck!
