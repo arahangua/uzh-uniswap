@@ -87,7 +87,7 @@ This project provides a minimal one-stop solution for deploying Uniswap contract
      ```
      For V3, the commands might be slightly different, so always check the official documentation.
    - **Deploy Contracts:**
-     - **Factory and Router:** You need to deploy at least the Factory and Router contracts from the chosen Uniswap version to your custom Ethereum chain. Use deployment scripts similar to the ERC20 deployment script (see below), adapting them for the Uniswap Factory and Router contracts. You will find deployment scripts or instructions within the Uniswap repositories themselves or their documentation.
+     - **Factory and Router:** You need to deploy at least the Factory and Router contracts from the chosen Uniswap version to your custom Ethereum chain. **You will need to find deployment scripts or instructions within the Uniswap repositories or their documentation and adapt them to your Hardhat setup.** Example deployment scripts for ERC20 tokens are provided later in this guide, which you can use as a template.
      - **WETH (Wrapped ETH):**  For Uniswap V2, you will also need to deploy a WETH contract if you don't have one already on your network. Uniswap V2 periphery repository usually includes a WETH deployment script. For V3, WETH is also typically required.
    - **Note Contract Addresses:** After deploying the Factory, Router, and WETH (if applicable) contracts, note down their contract addresses. You will need these addresses in later steps and in your scripts.
 
@@ -134,7 +134,7 @@ This project provides a minimal one-stop solution for deploying Uniswap contract
      ```bash
      npx hardhat run scripts/remove_liquidity.js --network yourNetworkName
      ```
-   - In Uniswap V3, fee collection is more granular and might require different functions. Refer to Uniswap V3 documentation for details.
+   - In Uniswap V3, fee collection is more granular and might require different functions. Refer to Uniswap V3 documentation for details and consider using the Uniswap V3 SDK for easier interaction.
 
 **Frontend Implementation:**
 
@@ -150,8 +150,9 @@ This section provides instructions for setting up a minimal React frontend to in
 2.  **Install Frontend Dependencies:**
     Install necessary packages for interacting with Ethereum and building the UI:
     ```bash
-    npm install ethers web3 react-scripts
+    npm install ethers react-scripts
     ```
+    We recommend using `ethers` for interacting with Ethereum contracts in your frontend as it is consistent with the Hardhat development environment.
 
 3.  **Environment Variables for Frontend:**
     In your `frontend` directory, create a `.env.local` file to store contract addresses and network information.  This is specific to React projects.
@@ -230,7 +231,10 @@ This section provides instructions for setting up a minimal React frontend to in
     This will usually open your frontend in a browser at `http://localhost:3000`.
 
 6.  **Expand Frontend Functionality:**
-    - **Contract Interaction:** Use `ethers.js` or `web3.js` within your React components to interact with your deployed contracts. You will need to fetch contract ABIs (Application Binary Interfaces) for your ERC20 token, Uniswap Factory, Router, and Pair contracts. You can usually find ABIs in the compiled output of your smart contracts or in the Uniswap repository packages.
+    - **Contract Interaction:** Use `ethers.js` within your React components to interact with your deployed contracts. You will need to use Contract ABIs (Application Binary Interfaces) for your ERC20 token, Uniswap Factory, Router, and Pair contracts.
+        - **ERC20 Token ABI:** You can find the ABI for your `MyToken` contract in the compiled output in your Hardhat project under `artifacts/contracts/MyToken.sol/MyToken.json`. Look for the `abi` field in this JSON file.
+        - **Uniswap V2 ABIs:** For Uniswap V2 contracts, after installing `@uniswap/v2-core` and `@uniswap/v2-periphery` in your Hardhat project, you can find the ABIs in the `node_modules` directory, for example, under `@uniswap/v2-core/build/abi` and `@uniswap/v2-periphery/build/abi`.
+        - **Uniswap V3 ABIs:** If you are using Uniswap V3, you will similarly find ABIs in the `node_modules` directory after installing Uniswap V3 SDKs and libraries. **Consider using the official Uniswap V3 SDK for easier frontend integration with V3 contracts.**
     - **UI Elements:** Create React components and UI elements (buttons, input fields, etc.) to allow users to perform actions like:
         - Connect/disconnect wallet
         - View token balances
@@ -247,12 +251,19 @@ This section provides instructions for setting up a minimal React frontend to in
 
 **Uniswap V2 vs V3:**
 
-- The frontend interaction will also differ slightly between Uniswap V2 and V3, especially due to the complexities of concentrated liquidity and NFT positions in V3. If you are using V3, you will need to use the Uniswap V3 SDK and adapt your frontend logic accordingly.  Refer to the Uniswap V3 documentation and SDK examples for frontend integration with V3.
+- This guide primarily focuses on Uniswap V2-like interactions.
+- Uniswap V3 introduces significant changes, including:
+    - **Concentrated Liquidity:**  Liquidity providers can choose price ranges within which they want to provide liquidity, leading to potentially higher capital efficiency.
+    - **Multiple Fee Tiers:** V3 supports different fee tiers (e.g., 0.05%, 0.3%, 1%), allowing for more flexibility.
+    - **Non-Fungible Liquidity Positions (NFTs):**  Liquidity positions in V3 are represented as NFTs, making them more complex to manage but also enabling more advanced strategies.
+    - **Improved Oracle:** V3 has a more sophisticated oracle mechanism.
+- If you are using Uniswap V3 contracts, you will need to adapt the scripts and interactions accordingly. **For frontend integration with Uniswap V3, it is highly recommended to use the official Uniswap V3 SDK.** Refer to the official Uniswap V3 documentation and SDK for specific details on contract addresses, ABIs, and function calls.
 
 **Note:**
 
-- This frontend guide provides a very basic starting point. Building a production-ready frontend for Uniswap interaction will require significantly more effort, including UI/UX design, robust error handling, security considerations, and more advanced state management.
-- Remember to replace placeholders with your actual values and contract addresses.
-- Always review and understand the frontend code and how it interacts with your smart contracts.
+- Replace placeholders with your actual values and contract addresses.
+- You will need to install Uniswap V2 or V3 contract ABIs (e.g., `@uniswap/v2-core`, `@uniswap/v2-periphery` or similar for V3) and import them in your scripts and frontend to interact with Uniswap contracts.
+- This guide provides basic examples. You may need to add error handling, more robust input validation, and more advanced features for a production-ready application.
+- Always review and understand the code and scripts before running them, especially when dealing with blockchain and smart contracts.
 
-This updated `README.md` now includes concrete instructions for setting up a basic React frontend to interact with your deployed Uniswap contracts. Remember to expand upon this basic example to build a more complete and user-friendly frontend application. Good luck!
+This updated `README.md` now includes clarifications on Uniswap contract deployment, improved frontend dependency recommendations, more specific ABI instructions, and stronger emphasis on using the Uniswap V3 SDK for V3 implementations. Remember to expand upon this basic example to build a more complete and user-friendly frontend application. Good luck!
