@@ -10,6 +10,7 @@ This project provides a minimal one-stop solution for deploying Uniswap contract
 - Node.js and npm installed
 - Basic understanding of Ethereum development and smart contracts
 - Familiarity with Hardhat development environment (or similar tools)
+- Git
 
 **Setup:**
 
@@ -61,48 +62,43 @@ This project provides a minimal one-stop solution for deploying Uniswap contract
 
 **Steps:**
 
+**Deploy Uniswap V2 or V3 Contracts:**
+
+   - **Choose Uniswap Version:** Decide whether you want to use Uniswap V2 or V3. This guide will assume you are using V2 for simplicity, but instructions for V3 are similar.
+   - **Fetch Uniswap Contracts:**
+     - **Uniswap V2:** Clone the Uniswap V2 repositories from Github:
+       ```bash
+       git clone https://github.com/Uniswap/v2-core.git uniswap-v2-core
+       git clone https://github.com/Uniswap/v2-periphery.git uniswap-v2-periphery
+       ```
+     - **Uniswap V3:** Clone the Uniswap V3 repositories from Github:
+       ```bash
+       git clone https://github.com/Uniswap/v3-core.git uniswap-v3-core
+       git clone https://github.com/Uniswap/v3-periphery.git uniswap-v3-periphery
+       ```
+   - **Install Dependencies and Compile:** Navigate into each cloned repository (e.g., `uniswap-v2-core`) and install dependencies and compile the contracts. Refer to the Uniswap repository's README for specific instructions. For V2, it's usually:
+     ```bash
+     cd uniswap-v2-core
+     npm install
+     npm run build
+     cd ../uniswap-v2-periphery
+     npm install
+     npm run build
+     ```
+     For V3, the commands might be slightly different, so always check the official documentation.
+   - **Deploy Contracts:**
+     - **Factory and Router:** You need to deploy at least the Factory and Router contracts from the chosen Uniswap version to your custom Ethereum chain. Use deployment scripts similar to the ERC20 deployment script (see below), adapting them for the Uniswap Factory and Router contracts. You will find deployment scripts or instructions within the Uniswap repositories themselves or their documentation.
+     - **WETH (Wrapped ETH):**  For Uniswap V2, you will also need to deploy a WETH contract if you don't have one already on your network. Uniswap V2 periphery repository usually includes a WETH deployment script. For V3, WETH is also typically required.
+   - **Note Contract Addresses:** After deploying the Factory, Router, and WETH (if applicable) contracts, note down their contract addresses. You will need these addresses in later steps and in your scripts.
+
 **1. Create ERC20 Token:**
 
-   - Write a smart contract for your ERC20 token (e.g., `contracts/MyToken.sol`). You can use standard ERC20 implementations like those from OpenZeppelin.
-     ```solidity
-     // contracts/MyToken.sol
-     // SPDX-License-Identifier: MIT
-     pragma solidity ^0.8.0;
-
-     import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
-     contract MyToken is ERC20 {
-         constructor() ERC20("MyToken", "MTK") {
-             _mint(msg.sender, 1000000 * 10**18); // Mint 1,000,000 tokens to deployer
-         }
-     }
-     ```
+   - Write a smart contract for your ERC20 token (e.g., `contracts/MyToken.sol`). You can use standard ERC20 implementations like those from OpenZeppelin.  Create a file `contracts/MyToken.sol` and write your ERC20 contract code in it.  For example, you can create a simple ERC20 token inheriting from OpenZeppelin's ERC20 contract and minting initial tokens to the deployer.
    - Compile your contracts:
      ```bash
      npx hardhat compile
      ```
-   - Deploy your ERC20 contract to your custom Ethereum chain using a deployment script (e.g., `scripts/deploy_erc20.js`).
-     ```javascript
-     // scripts/deploy_erc20.js
-     const hre = require("hardhat");
-     require("dotenv").config();
-
-     async function main() {
-       const MyToken = await hre.ethers.getContractFactory("MyToken");
-       const myToken = await MyToken.deploy();
-
-       await myToken.deployed();
-
-       console.log("MyToken deployed to:", myToken.address);
-     }
-
-     main()
-       .then(() => process.exit(0))
-       .catch((error) => {
-         console.error(error);
-         process.exit(1);
-       });
-     ```
+   - Deploy your ERC20 contract to your custom Ethereum chain using a deployment script (e.g., `scripts/deploy_erc20.js`). Create a file `scripts/deploy_erc20.js` and write a deployment script using `ethers.js` to deploy your `MyToken` contract.  This script will use your deployer private key from the `.env` file and your network configuration from `hardhat.config.js`.
      ```bash
      npx hardhat run scripts/deploy_erc20.js --network yourNetworkName
      ```
@@ -110,38 +106,8 @@ This project provides a minimal one-stop solution for deploying Uniswap contract
 
 **2. Create Liquidity Pool:**
 
-   - Ensure you have deployed Uniswap V2 or V3 factory and router contracts to your custom Ethereum chain. If not, you'll need to deploy them first, following Uniswap's official documentation and using similar deployment scripts. Assume you have Factory and Router addresses.
-   - Use a script (e.g., `scripts/create_pair.js`) to interact with the Uniswap Factory contract to create a new pair (liquidity pool) for your ERC20 token and WETH (Wrapped Ether) or another suitable token.  This script will use the Factory contract address and your ERC20 token address.
-     ```javascript
-     // scripts/create_pair.js
-     const hre = require("hardhat");
-     require("dotenv").config();
-
-     const FACTORY_ADDRESS = "YOUR_UNISWAP_FACTORY_ADDRESS"; // Replace with your Factory address
-     const WETH_ADDRESS = "YOUR_WETH_ADDRESS"; // Replace with your WETH address
-
-     async function main() {
-       const [deployer] = await hre.ethers.getSigners();
-       const factory = await hre.ethers.getContractAt("IUniswapV2Factory", FACTORY_ADDRESS, deployer); // Assuming Uniswap V2 Factory ABI is available as IUniswapV2Factory
-
-       const tokenAddress = "YOUR_ERC20_TOKEN_ADDRESS"; // Replace with your deployed ERC20 token address
-
-       const tx = await factory.createPair(tokenAddress, WETH_ADDRESS);
-       const receipt = await tx.wait();
-
-       const pairCreatedEvent = receipt.events.find(event => event.event === 'PairCreated');
-       const pairAddress = pairCreatedEvent.args.pair;
-
-       console.log("Pair created at:", pairAddress);
-     }
-
-     main()
-       .then(() => process.exit(0))
-       .catch((error) => {
-         console.error(error);
-         process.exit(1);
-       });
-     ```
+   - Ensure you have deployed Uniswap V2 or V3 factory and router contracts and have their addresses.
+   - Use a script (e.g., `scripts/create_pair.js`) to interact with the Uniswap Factory contract to create a new pair (liquidity pool) for your ERC20 token and WETH (Wrapped Ether) or another suitable token.  This script will use the Factory contract address, WETH address, and your ERC20 token address.  Remember to replace placeholders with your actual contract addresses in the script.
      ```bash
      npx hardhat run scripts/create_pair.js --network yourNetworkName
      ```
@@ -149,107 +115,14 @@ This project provides a minimal one-stop solution for deploying Uniswap contract
 
 **3. Provide Liquidity:**
 
-   - Use a script (e.g., `scripts/add_liquidity.js`) to interact with the Uniswap Router contract to provide liquidity to the pair. This script will use the Router contract address, pair contract address, and amounts of tokens to provide. You will need to approve the Router contract to spend your ERC20 tokens and WETH before adding liquidity.
-     ```javascript
-     // scripts/add_liquidity.js
-     const hre = require("hardhat");
-     require("dotenv").config();
-
-     const ROUTER_ADDRESS = "YOUR_UNISWAP_ROUTER_ADDRESS"; // Replace with your Router address
-     const WETH_ADDRESS = "YOUR_WETH_ADDRESS"; // Replace with your WETH address
-
-     async function main() {
-       const [deployer] = await hre.ethers.getSigners();
-       const router = await hre.ethers.getContractAt("IUniswapV2Router02", ROUTER_ADDRESS, deployer); // Assuming Uniswap V2 Router ABI is available as IUniswapV2Router02
-
-       const tokenAddress = "YOUR_ERC20_TOKEN_ADDRESS"; // Replace with your deployed ERC20 token address
-       const pairAddress = "YOUR_PAIR_ADDRESS"; // Replace with your created Pair address
-
-       const tokenAmount = hre.ethers.utils.parseUnits("1000", 18); // Example: 1000 tokens
-       const wethAmount = hre.ethers.utils.parseEther("1"); // Example: 1 WETH
-
-       // Approve router to spend tokens
-       const tokenContract = await hre.ethers.getContractAt("ERC20", tokenAddress, deployer); // Assuming standard ERC20 ABI
-       await tokenContract.approve(ROUTER_ADDRESS, tokenAmount);
-
-       const wethContract = await hre.ethers.getContractAt("IWETH", WETH_ADDRESS, deployer); // Assuming WETH ABI is available as IWETH
-       await wethContract.deposit({ value: wethAmount });
-       await wethContract.approve(ROUTER_ADDRESS, wethAmount);
-
-
-       const tx = await router.addLiquidity(
-         tokenAddress,
-         WETH_ADDRESS,
-         tokenAmount,
-         wethAmount,
-         tokenAmount, // min amount A
-         wethAmount, // min amount B
-         deployer.address,
-         Math.floor(Date.now() / 1000) + 60 * 10 // 10 minutes from now
-       );
-       await tx.wait();
-
-       console.log("Liquidity added");
-     }
-
-     main()
-       .then(() => process.exit(0))
-       .catch((error) => {
-         console.error(error);
-         process.exit(1);
-       });
-     ```
+   - Use a script (e.g., `scripts/add_liquidity.js`) to interact with the Uniswap Router contract to provide liquidity to the pair. This script will use the Router contract address, WETH address, pair contract address, and amounts of tokens to provide. You will need to approve the Router contract to spend your ERC20 tokens and WETH before adding liquidity.
      ```bash
      npx hardhat run scripts/add_liquidity.js --network yourNetworkName
      ```
 
 **4. Do Exchange (Swap):**
 
-   - Use a script (e.g., `scripts/swap.js`) to interact with the Uniswap Router contract to perform a swap. This script will use the Router contract address, token addresses, amount to swap, and recipient address.
-     ```javascript
-     // scripts/swap.js
-     const hre = require("hardhat");
-     require("dotenv").config();
-
-     const ROUTER_ADDRESS = "YOUR_UNISWAP_ROUTER_ADDRESS"; // Replace with your Router address
-     const WETH_ADDRESS = "YOUR_WETH_ADDRESS"; // Replace with your WETH address
-
-     async function main() {
-       const [deployer] = await hre.ethers.getSigners();
-       const router = await hre.ethers.getContractAt("IUniswapV2Router02", ROUTER_ADDRESS, deployer); // Assuming Uniswap V2 Router ABI is available as IUniswapV2Router02
-
-       const tokenAddress = "YOUR_ERC20_TOKEN_ADDRESS"; // Replace with your deployed ERC20 token address
-
-       const amountIn = hre.ethers.utils.parseUnits("10", 18); // Example: 10 tokens to swap
-       const amountOutMin = 0; // Minimum output amount
-       const path = [tokenAddress, WETH_ADDRESS]; // Token -> WETH path
-       const to = deployer.address; // Recipient address
-       const deadline = Math.floor(Date.now() / 1000) + 60 * 10; // 10 minutes from now
-
-       // Approve router to spend tokens (if not already approved)
-       const tokenContract = await hre.ethers.getContractAt("ERC20", tokenAddress, deployer); // Assuming standard ERC20 ABI
-       await tokenContract.approve(ROUTER_ADDRESS, amountIn);
-
-
-       const tx = await router.swapExactTokensForETH(
-         amountIn,
-         amountOutMin,
-         path,
-         to,
-         deadline
-       );
-       await tx.wait();
-
-       console.log("Swap executed");
-     }
-
-     main()
-       .then(() => process.exit(0))
-       .catch((error) => {
-         console.error(error);
-         process.exit(1);
-       });
-     ```
+   - Use a script (e.g., `scripts/swap.js`) to interact with the Uniswap Router contract to perform a swap. This script will use the Router contract address, WETH address, token addresses, amount to swap, and recipient address.
      ```bash
      npx hardhat run scripts/swap.js --network yourNetworkName
      ```
@@ -258,62 +131,6 @@ This project provides a minimal one-stop solution for deploying Uniswap contract
 
    - In Uniswap V2, fees are distributed to liquidity providers proportionally to their liquidity. Fees are automatically accumulated in the pair contract. To collect fees, liquidity providers need to remove liquidity.
    - Use a script (e.g., `scripts/remove_liquidity.js`) to remove liquidity from the pool. When removing liquidity, accumulated fees are automatically distributed to your address based on your provided liquidity share.
-     ```javascript
-     // scripts/remove_liquidity.js
-     const hre = require("hardhat");
-     require("dotenv").config();
-
-     const ROUTER_ADDRESS = "YOUR_UNISWAP_ROUTER_ADDRESS"; // Replace with your Router address
-     const WETH_ADDRESS = "YOUR_WETH_ADDRESS"; // Replace with your WETH address
-     const PAIR_ADDRESS = "YOUR_PAIR_ADDRESS"; // Replace with your Pair address
-
-     async function main() {
-       const [deployer] = await hre.ethers.getSigners();
-       const router = await hre.ethers.getContractAt("IUniswapV2Router02", ROUTER_ADDRESS, deployer); // Assuming Uniswap V2 Router ABI is available as IUniswapV2Router02
-
-       const tokenAddress = "YOUR_ERC20_TOKEN_ADDRESS"; // Replace with your deployed ERC20 token address
-
-       const liquidityToRemove = await getLiquidityBalance(PAIR_ADDRESS, deployer.address); // Implement getLiquidityBalance to fetch LP token balance
-
-       const amountAMin = 0;
-       const amountBMin = 0;
-       const to = deployer.address;
-       const deadline = Math.floor(Date.now() / 1000) + 60 * 10; // 10 minutes from now
-
-       // Approve router to spend LP tokens
-       const pairContract = await hre.ethers.getContractAt("IUniswapV2Pair", PAIR_ADDRESS, deployer); // Assuming Uniswap V2 Pair ABI is available as IUniswapV2Pair
-       await pairContract.approve(ROUTER_ADDRESS, liquidityToRemove);
-
-
-       const tx = await router.removeLiquidity(
-         tokenAddress,
-         WETH_ADDRESS,
-         liquidityToRemove,
-         amountAMin,
-         amountBMin,
-         to,
-         deadline
-       );
-       await tx.wait();
-
-       console.log("Liquidity removed and fees collected (if any)");
-     }
-
-     // Helper function to get LP token balance (example - you might need to adjust based on your setup)
-     async function getLiquidityBalance(pairAddress, accountAddress) {
-         const pairContract = await hre.ethers.getContractAt("IUniswapV2Pair", pairAddress); // Assuming Uniswap V2 Pair ABI
-         const balance = await pairContract.balanceOf(accountAddress);
-         return balance;
-     }
-
-
-     main()
-       .then(() => process.exit(0))
-       .catch((error) => {
-         console.error(error);
-         process.exit(1);
-       });
-     ```
      ```bash
      npx hardhat run scripts/remove_liquidity.js --network yourNetworkName
      ```
@@ -352,4 +169,4 @@ This project provides a minimal one-stop solution for deploying Uniswap contract
 - This guide provides basic examples. You may need to add error handling, more robust input validation, and more advanced features for a production-ready application.
 - Always review and understand the code and scripts before running them, especially when dealing with blockchain and smart contracts.
 
-This guide provides a more detailed step-by-step process with example code snippets and configuration instructions to help you build the project from scratch. Remember to adapt the scripts and configurations to your specific setup and refer to the official Uniswap documentation for more advanced features and details. Good luck!
+This guide provides a more detailed step-by-step process with instructions to fetch and deploy Uniswap contracts and create your own ERC20 token and interact with Uniswap for liquidity provision and token swapping. Remember to adapt the scripts and configurations to your specific setup and refer to the official Uniswap documentation for more advanced features and details. Good luck!
